@@ -1,0 +1,880 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Support Admin Panel</title>
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <style>
+      * {
+        box-sizing: border-box;
+
+        margin: 0;
+
+        padding: 0;
+
+        font-family: Arial, sans-serif;
+      }
+
+      body {
+        display: flex;
+
+        height: 100vh;
+
+        background: #f4f6f8;
+      }
+
+      /* =====================================
+           SIDEBAR
+        ===================================== */
+
+      .sidebar {
+        width: 320px;
+
+        background: white;
+
+        border-right: 1px solid #ddd;
+
+        overflow-y: auto;
+      }
+
+      .sidebar h3 {
+        padding: 15px;
+
+        background: #075e54;
+
+        color: white;
+
+        font-size: 16px;
+      }
+
+      .user-tab {
+        position: relative;
+
+        padding: 13px 15px;
+
+        border-bottom: 1px solid #eee;
+
+        cursor: pointer;
+
+        transition: 0.2s;
+
+        background: white;
+      }
+
+      .user-tab:hover {
+        background: #f5f5f5;
+      }
+
+      .user-tab.active {
+        background: #e8f5e9;
+
+        font-weight: bold;
+      }
+
+      .user-tab.new-message {
+        background: #d9fdd3;
+
+        border-left: 5px solid #00a884;
+      }
+
+      /* =====================================
+           USER MOBILE
+        ===================================== */
+
+      .user-mobile {
+        display: block;
+
+        font-size: 15px;
+
+        color: #222;
+
+        margin-bottom: 5px;
+      }
+
+      /* =====================================
+           USER ID
+        ===================================== */
+
+      .user-id {
+        display: block;
+
+        font-size: 11px;
+
+        color: #888;
+
+        word-break: break-all;
+      }
+
+      /* =====================================
+           LAST MESSAGE
+        ===================================== */
+
+      .last-message {
+        display: block;
+
+        margin-top: 6px;
+
+        font-size: 12px;
+
+        color: #777;
+
+        white-space: nowrap;
+
+        overflow: hidden;
+
+        text-overflow: ellipsis;
+      }
+
+      /* =====================================
+           UNREAD COUNT
+        ===================================== */
+
+      .unread-badge {
+        position: absolute;
+
+        right: 12px;
+
+        top: 15px;
+
+        min-width: 22px;
+
+        height: 22px;
+
+        padding: 0 6px;
+
+        background: #25d366;
+
+        color: white;
+
+        border-radius: 50px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        font-size: 11px;
+
+        font-weight: bold;
+      }
+
+      /* =====================================
+           CHAT AREA
+        ===================================== */
+
+      .chat-area {
+        flex: 1;
+
+        display: flex;
+
+        flex-direction: column;
+
+        min-width: 0;
+      }
+
+      /* =====================================
+           HEADER
+        ===================================== */
+
+      .header {
+        padding: 12px 15px;
+
+        background: #f0f2f5;
+
+        border-bottom: 1px solid #ddd;
+      }
+
+      .header-mobile {
+        font-size: 17px;
+
+        font-weight: bold;
+
+        color: #222;
+      }
+
+      .header-id {
+        font-size: 11px;
+
+        color: #777;
+
+        margin-top: 5px;
+
+        word-break: break-all;
+      }
+
+      /* =====================================
+           MESSAGES
+        ===================================== */
+
+      .messages {
+        flex: 1;
+
+        padding: 20px;
+
+        overflow-y: auto;
+
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 10px;
+
+        background: #efeae2;
+      }
+
+      .msg {
+        padding: 9px 12px;
+
+        border-radius: 7px;
+
+        max-width: 60%;
+
+        font-size: 14px;
+
+        word-wrap: break-word;
+      }
+
+      .msg.user {
+        background: white;
+
+        border: 1px solid #ccc;
+
+        align-self: flex-start;
+
+        border-top-left-radius: 0;
+      }
+
+      .msg.admin {
+        background: #dcf8c6;
+
+        align-self: flex-end;
+
+        border-top-right-radius: 0;
+      }
+
+      .msg-time {
+        display: block;
+
+        font-size: 10px;
+
+        color: #777;
+
+        margin-top: 4px;
+
+        text-align: right;
+      }
+
+      /* =====================================
+           INPUT
+        ===================================== */
+
+      .input-bar {
+        display: flex;
+
+        padding: 10px;
+
+        background: white;
+
+        border-top: 1px solid #ddd;
+      }
+
+      .input-bar input {
+        flex: 1;
+
+        padding: 10px;
+
+        border: 1px solid #ccc;
+
+        border-radius: 4px;
+
+        outline: none;
+
+        font-size: 14px;
+      }
+
+      .input-bar button {
+        padding: 10px 20px;
+
+        background: #075e54;
+
+        color: white;
+
+        border: none;
+
+        margin-left: 8px;
+
+        cursor: pointer;
+
+        border-radius: 4px;
+      }
+
+      /* =====================================
+           EMPTY CHAT
+        ===================================== */
+
+      .empty-chat {
+        margin: auto;
+
+        color: #777;
+
+        text-align: center;
+      }
+
+      @media (max-width: 700px) {
+        .sidebar {
+          width: 240px;
+        }
+
+        .msg {
+          max-width: 80%;
+        }
+      }
+
+      @media (max-width: 500px) {
+        .sidebar {
+          width: 190px;
+        }
+
+        .msg {
+          max-width: 90%;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- =====================================
+         SIDEBAR
+    ===================================== -->
+
+    <div class="sidebar">
+      <h3 id="userTitle">All Users</h3>
+
+      <div id="userList"></div>
+    </div>
+
+    <!-- =====================================
+         CHAT AREA
+    ===================================== -->
+
+    <div class="chat-area">
+      <!-- HEADER -->
+
+      <div class="header" id="activeUserHeader">
+        <div class="header-mobile">Select a user to chat</div>
+
+        <div class="header-id">No user selected</div>
+      </div>
+
+      <!-- =====================================
+             CHAT
+        ===================================== -->
+
+      <div class="messages" id="adminChatBox">
+        <div class="empty-chat">Select a user from the left side</div>
+      </div>
+
+      <!-- =====================================
+             REPLY
+        ===================================== -->
+
+      <div class="input-bar">
+        <input
+          type="text"
+          id="adminInput"
+          placeholder="Type reply here..."
+          onkeypress="handleKey(event)"
+        />
+
+        <button onclick="sendReply()">Reply</button>
+      </div>
+    </div>
+
+    <script>
+      // =========================================
+      // SOCKET
+      // =========================================
+
+      const socket = io();
+
+      // =========================================
+      // CURRENT USER
+      // =========================================
+
+      let currentUserId = null;
+
+      // =========================================
+      // USER DATA
+      // =========================================
+
+      const userChats = {};
+
+      // =========================================
+      // ELEMENTS
+      // =========================================
+
+      const userList = document.getElementById("userList");
+
+      const adminChatBox = document.getElementById("adminChatBox");
+
+      const activeUserHeader = document.getElementById("activeUserHeader");
+
+      const adminInput = document.getElementById("adminInput");
+
+      const userTitle = document.getElementById("userTitle");
+
+      // =========================================
+      // LOAD ALL USERS FROM MONGODB
+      // =========================================
+
+      async function loadUsers() {
+        try {
+          const response = await fetch("/api/chat-users");
+
+          if (!response.ok) {
+            throw new Error("Unable to load users");
+          }
+
+          const users = await response.json();
+
+          // =========================================
+          // STORE USERS
+          // =========================================
+
+          users.forEach((user) => {
+            userChats[user.userId] = {
+              userId: user.userId,
+
+              mobile: user.mobile,
+
+              messages: user.messages || [],
+
+              unread: 0,
+            };
+          });
+
+          userTitle.innerText = `All Users (${users.length})`;
+
+          renderUserList();
+
+          console.log("Users loaded:", userChats);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      // =========================================
+      // LOAD SINGLE USER HISTORY
+      // =========================================
+
+      async function loadUserHistory(userId) {
+        try {
+          const response = await fetch(
+            `/api/chat-users/${encodeURIComponent(userId)}`,
+          );
+
+          if (!response.ok) {
+            throw new Error("History not found");
+          }
+
+          const user = await response.json();
+
+          // =========================================
+          // UPDATE USER DATA
+          // =========================================
+
+          userChats[user.userId] = {
+            userId: user.userId,
+
+            mobile: user.mobile,
+
+            messages: user.messages || [],
+
+            unread: 0,
+          };
+
+          // =========================================
+          // RENDER HEADER
+          // =========================================
+
+          activeUserHeader.innerHTML = `
+
+                    <div class="header-mobile">
+
+                        📱
+                        ${escapeHtml(user.mobile)}
+
+                    </div>
+
+                    <div class="header-id">
+
+                        User ID:
+                        ${escapeHtml(user.userId)}
+
+                    </div>
+
+                `;
+
+          // =========================================
+          // RENDER HISTORY
+          // =========================================
+
+          renderMessages();
+        } catch (error) {
+          console.error("History error:", error);
+        }
+      }
+
+      // =========================================
+      // SELECT USER
+      // =========================================
+
+      function selectUser(userId) {
+        currentUserId = userId;
+
+        // Clear unread
+
+        if (userChats[userId]) {
+          userChats[userId].unread = 0;
+        }
+
+        renderUserList();
+
+        // =========================================
+        // GET HISTORY FROM MONGODB
+        // =========================================
+
+        loadUserHistory(userId);
+
+        adminInput.focus();
+      }
+
+      // =========================================
+      // RENDER USER LIST
+      // =========================================
+
+      function renderUserList() {
+        userList.innerHTML = "";
+
+        const ids = Object.keys(userChats);
+
+        if (ids.length === 0) {
+          userList.innerHTML = `
+
+                    <div style="
+                        padding:20px;
+                        text-align:center;
+                        color:#777;
+                    ">
+
+                        No users found
+
+                    </div>
+
+                `;
+
+          return;
+        }
+
+        ids.forEach((id) => {
+          const user = userChats[id];
+
+          const div = document.createElement("div");
+
+          let className = "user-tab";
+
+          if (id === currentUserId) {
+            className += " active";
+          }
+
+          if (user.unread > 0 && id !== currentUserId) {
+            className += " new-message";
+          }
+
+          div.className = className;
+
+          // Last message
+
+          let lastMessage = "";
+
+          if (user.messages && user.messages.length) {
+            lastMessage = user.messages[user.messages.length - 1].message;
+          }
+
+          div.innerHTML = `
+
+                        <span class="user-mobile">
+
+                            📱
+                            ${escapeHtml(user.mobile)}
+
+                        </span>
+
+
+                        <span class="user-id">
+
+                            ID:
+                            ${escapeHtml(user.userId)}
+
+                        </span>
+
+
+                        <span class="last-message">
+
+                            ${escapeHtml(lastMessage || "No messages")}
+
+                        </span>
+
+
+                        ${
+                          user.unread > 0
+                            ? `
+                            <span class="unread-badge">
+
+                                ${user.unread > 99 ? "99+" : user.unread}
+
+                            </span>
+                            `
+                            : ""
+                        }
+
+                    `;
+
+          div.onclick = () => {
+            selectUser(id);
+          };
+
+          userList.appendChild(div);
+        });
+      }
+
+      // =========================================
+      // RENDER CHAT HISTORY
+      // =========================================
+
+      function renderMessages() {
+        adminChatBox.innerHTML = "";
+
+        if (!currentUserId || !userChats[currentUserId]) {
+          adminChatBox.innerHTML = `
+
+                    <div class="empty-chat">
+
+                        Select a user from
+                        the left side
+
+                    </div>
+
+                `;
+
+          return;
+        }
+
+        const messages = userChats[currentUserId].messages;
+
+        if (!messages || messages.length === 0) {
+          adminChatBox.innerHTML = `
+
+                    <div class="empty-chat">
+
+                        No chat history
+
+                    </div>
+
+                `;
+
+          return;
+        }
+
+        messages.forEach((message) => {
+          const div = document.createElement("div");
+
+          div.className = `msg ${message.sender}`;
+
+          const messageTime = new Date(message.time);
+
+          const time = messageTime.toLocaleTimeString([], {
+            hour: "2-digit",
+
+            minute: "2-digit",
+          });
+
+          div.innerHTML = `
+
+                        <div>
+
+                            ${escapeHtml(message.message)}
+
+                        </div>
+
+
+                        <div class="msg-time">
+
+                            ${time}
+
+                        </div>
+
+                    `;
+
+          adminChatBox.appendChild(div);
+        });
+
+        // Scroll to bottom
+
+        adminChatBox.scrollTop = adminChatBox.scrollHeight;
+      }
+
+      // =========================================
+      // NEW USER
+      // =========================================
+
+      socket.on("new_user_connected", (data) => {
+        if (!userChats[data.userId]) {
+          userChats[data.userId] = {
+            userId: data.userId,
+
+            mobile: data.mobile,
+
+            messages: [],
+
+            unread: 0,
+          };
+        }
+
+        renderUserList();
+      });
+
+      // =========================================
+      // NEW USER MESSAGE
+      // =========================================
+
+      socket.on("admin_receive_message", (data) => {
+        // =========================================
+        // CREATE USER
+        // =========================================
+
+        if (!userChats[data.userId]) {
+          userChats[data.userId] = {
+            userId: data.userId,
+
+            mobile: data.mobile,
+
+            messages: [],
+
+            unread: 0,
+          };
+        }
+
+        // =========================================
+        // ADD MESSAGE
+        // =========================================
+
+        userChats[data.userId].messages.push({
+          sender: "user",
+
+          message: data.message,
+
+          time: new Date(),
+        });
+
+        // =========================================
+        // UNREAD COUNT
+        // =========================================
+
+        if (currentUserId !== data.userId) {
+          userChats[data.userId].unread++;
+        }
+
+        renderUserList();
+
+        // =========================================
+        // IF CURRENT CHAT
+        // =========================================
+
+        if (currentUserId === data.userId) {
+          renderMessages();
+        }
+      });
+
+      // =========================================
+      // SEND ADMIN REPLY
+      // =========================================
+
+      function sendReply() {
+        const text = adminInput.value.trim();
+
+        if (!text) {
+          return;
+        }
+
+        if (!currentUserId) {
+          alert("Please select a user first.");
+
+          return;
+        }
+
+        // =========================================
+        // ADD LOCALLY
+        // =========================================
+
+        userChats[currentUserId].messages.push({
+          sender: "admin",
+
+          message: text,
+
+          time: new Date(),
+        });
+
+        // =========================================
+        // SEND TO SERVER
+        // =========================================
+
+        socket.emit("admin_send_reply", {
+          userId: currentUserId,
+
+          message: text,
+        });
+
+        renderMessages();
+
+        adminInput.value = "";
+      }
+
+      // =========================================
+      // ENTER KEY
+      // =========================================
+
+      function handleKey(event) {
+        if (event.key === "Enter") {
+          sendReply();
+        }
+      }
+
+      // =========================================
+      // ESCAPE HTML
+      // =========================================
+
+      function escapeHtml(value) {
+        const div = document.createElement("div");
+
+        div.textContent = value ?? "";
+
+        return div.innerHTML;
+      }
+
+      // =========================================
+      // IMPORTANT:
+      // LOAD MONGODB DATA WHEN ADMIN
+      // PAGE OPENS / REFRESHES
+      // =========================================
+
+      loadUsers();
+    </script>
+  </body>
+</html>
