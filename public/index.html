@@ -1,736 +1,97 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <title>WhatsApp Support</title>
-
-    <script src="/socket.io/socket.io.js"></script>
-
-    <style>
-      * {
-        box-sizing: border-box;
-
-        margin: 0;
-
-        padding: 0;
-
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-          Arial, sans-serif;
-      }
-
-      body {
-        background-color: #efeae2;
-
-        display: flex;
-
-        justify-content: center;
-
-        height: 100vh;
-      }
-
-      .chat-container {
-        width: 100%;
-
-        max-width: 480px;
-
-        height: 100vh;
-
-        display: flex;
-
-        flex-direction: column;
-
-        background: #efeae2;
-
-        border: 1px solid #ddd;
-      }
-
-      /* =========================
-           HEADER
-        ========================= */
-
-      .header {
-        background-color: #075e54;
-
-        color: white;
-
-        padding: 10px 15px;
-
-        display: flex;
-
-        align-items: center;
-
-        gap: 12px;
-      }
-
-      .avatar {
-        width: 40px;
-
-        height: 40px;
-
-        border-radius: 50%;
-
-        background-color: #25d366;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        font-weight: bold;
-      }
-
-      .user-info h4 {
-        font-size: 16px;
-
-        margin-bottom: 2px;
-      }
-
-      .user-info p {
-        font-size: 11px;
-
-        opacity: 0.85;
-      }
-
-      /* =========================
-           MOBILE NUMBER POPUP
-        ========================= */
-
-      .name-overlay {
-        position: fixed;
-
-        inset: 0;
-
-        background: rgba(0, 0, 0, 0.55);
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        z-index: 1000;
-      }
-
-      .name-box {
-        width: 90%;
-
-        max-width: 380px;
-
-        background: white;
-
-        border-radius: 12px;
-
-        padding: 25px;
-
-        text-align: center;
-
-        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
-      }
-
-      .name-box h2 {
-        color: #075e54;
-
-        margin-bottom: 8px;
-      }
-
-      .name-box p {
-        color: #667781;
-
-        font-size: 14px;
-
-        margin-bottom: 20px;
-
-        line-height: 1.5;
-      }
-
-      /* Mobile Input */
-
-      .name-box input {
-        width: 100%;
-
-        padding: 12px 15px;
-
-        border: 1px solid #ccc;
-
-        border-radius: 6px;
-
-        outline: none;
-
-        font-size: 15px;
-
-        margin-bottom: 12px;
-      }
-
-      .name-box input:focus {
-        border-color: #00a884;
-      }
-
-      /* Start Button */
-
-      .start-btn {
-        width: 100%;
-
-        padding: 12px;
-
-        background-color: #00a884;
-
-        color: white;
-
-        border: none;
-
-        border-radius: 6px;
-
-        cursor: pointer;
-
-        font-size: 15px;
-
-        font-weight: 600;
-
-        margin-top: 5px;
-      }
-
-      .start-btn:hover {
-        background-color: #008f72;
-      }
-
-      /* =========================
-           CHAT BOX
-        ========================= */
-
-      .chat-box {
-        flex: 1;
-
-        padding: 15px;
-
-        overflow-y: auto;
-
-        display: flex;
-
-        flex-direction: column;
-
-        gap: 8px;
-
-        background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png");
-
-        background-repeat: repeat;
-      }
-
-      .msg {
-        max-width: 75%;
-
-        padding: 8px 12px;
-
-        border-radius: 8px;
-
-        font-size: 14px;
-
-        position: relative;
-
-        word-wrap: break-word;
-      }
-
-      .received {
-        background-color: #ffffff;
-
-        align-self: flex-start;
-
-        border-top-left-radius: 0;
-      }
-
-      .sent {
-        background-color: #d9fdd3;
-
-        align-self: flex-end;
-
-        border-top-right-radius: 0;
-      }
-
-      .time {
-        font-size: 10px;
-
-        color: #667781;
-
-        float: right;
-
-        margin-left: 10px;
-
-        margin-top: 4px;
-      }
-
-      /* =========================
-           FOOTER
-        ========================= */
-
-      .footer {
-        display: flex;
-
-        padding: 8px 10px;
-
-        background-color: #f0f2f5;
-
-        align-items: center;
-
-        gap: 8px;
-      }
-
-      .footer input {
-        flex: 1;
-
-        padding: 10px 14px;
-
-        border: none;
-
-        border-radius: 20px;
-
-        outline: none;
-
-        font-size: 14px;
-      }
-
-      .send-btn {
-        background-color: #00a884;
-
-        color: white;
-
-        border: none;
-
-        border-radius: 50%;
-
-        width: 40px;
-
-        height: 40px;
-
-        cursor: pointer;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        font-size: 16px;
-      }
-    </style>
-  </head>
-
-  <body>
-    <!-- =========================================
-         MOBILE NUMBER POPUP
-    ========================================= -->
-
-    <div class="name-overlay" id="nameOverlay">
-      <div class="name-box">
-        <h2>Welcome!</h2>
-
-        <p>
-          Please enter your 10-digit mobile number to start chatting with our
-          support team.
-        </p>
-
-        <input
-          type="tel"
-          id="userMobileInput"
-          placeholder="Enter 10-digit mobile number"
-          maxlength="10"
-          minlength="10"
-          inputmode="numeric"
-          autocomplete="tel"
-        />
-
-        <button class="start-btn" onclick="startChat()">Start Chat</button>
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content"
+  />
+  <link rel="stylesheet" href="css/index_style.css">
+  <title>WhatsApp Support</title>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+
+  <div class="name-overlay" id="nameOverlay">
+    <div class="name-box">
+      <h2>Welcome!</h2>
+
+      <p>
+        Please enter your 10-digit mobile number to
+        start chatting with our support team.
+      </p>
+
+      <input
+        type="tel"
+        id="userMobileInput"
+        placeholder="Enter 10-digit mobile number"
+        maxlength="10"
+        minlength="10"
+        inputmode="numeric"
+        autocomplete="tel"
+      />
+
+      <button
+        type="button"
+        class="start-btn"
+        id="startButton"
+        onclick="startChat()"
+      >
+        Start Chat
+      </button>
+    </div>
+  </div>
+
+  <div class="chat-container">
+
+    <div class="header">
+      <div class="avatar">WA</div>
+
+      <div class="user-info">
+        <h4>Support Official</h4>
+
+        <!-- ADMIN STATUS -->
+        <div class="user-status">
+          <span
+            class="status-dot offline"
+            id="statusDot"
+          ></span>
+
+          <span id="statusText">online</span>
+        </div>
       </div>
     </div>
 
-    <!-- =========================================
-         CHAT CONTAINER
-    ========================================= -->
+    <div class="chat-box" id="chatBox">
+      <div class="msg received" id="welcomeMessage">
+        Hello! How can we help you?
 
-    <div class="chat-container">
-      <!-- HEADER -->
-
-      <div class="header">
-        <div class="avatar">WA</div>
-
-        <div class="user-info">
-          <h4>Support Official</h4>
-
-          <p>online</p>
-        </div>
-      </div>
-
-      <!-- =========================================
-             CHAT MESSAGES
-        ========================================= -->
-
-      <div class="chat-box" id="chatBox">
-        <div class="msg received">
-          Hello! How can we help you?
-
-          <span class="time"> Just now </span>
-        </div>
-      </div>
-
-      <!-- =========================================
-             MESSAGE INPUT
-        ========================================= -->
-
-      <div class="footer">
-        <input
-          type="text"
-          id="msgInput"
-          placeholder="Message..."
-          onkeypress="handleKey(event)"
-        />
-
-        <button class="send-btn" onclick="sendMessage()">➤</button>
+        <span class="time">
+          Just now
+        </span>
       </div>
     </div>
 
-    <script>
-      // =========================================
-      // SOCKET.IO
-      // =========================================
-
-      const socket = io();
-
-      // =========================================
-      // ELEMENTS
-      // =========================================
-
-      const chatBox = document.getElementById("chatBox");
-
-      const msgInput = document.getElementById("msgInput");
-
-      const nameOverlay = document.getElementById("nameOverlay");
-
-      const userMobileInput = document.getElementById("userMobileInput");
-
-      // =========================================
-      // GENERATE PERMANENT USER ID
-      // =========================================
-
-      function generateUserId() {
-        return (
-          "USER-" +
-          Date.now() +
-          "-" +
-          Math.random().toString(36).substring(2, 8)
-        );
-      }
-
-      // =========================================
-      // GET EXISTING USER ID
-      // =========================================
-
-      let userId = localStorage.getItem("chatUserId");
-
-      // =========================================
-      // CREATE USER ID ONLY FIRST TIME
-      // =========================================
-
-      if (!userId) {
-        userId = generateUserId();
-
-        localStorage.setItem("chatUserId", userId);
-      }
-
-      console.log("Permanent User ID:", userId);
-
-      // =========================================
-      // GET SAVED MOBILE NUMBER
-      // =========================================
-
-      let userMobile = localStorage.getItem("chatUserMobile") || "";
-
-      // =========================================
-      // CONNECT USER
-      // =========================================
-
-      function connectUser() {
-        if (!userId || !userMobile) {
-          return;
-        }
-
-        socket.emit("user_join", {
-          userId: userId,
-
-          mobile: userMobile,
-        });
-
-        console.log("User connected:", {
-          userId: userId,
-
-          mobile: userMobile,
-        });
-      }
-
-      // =========================================
-      // START CHAT
-      // =========================================
-
-      function startChat() {
-        const mobile = userMobileInput.value.trim();
-
-        // =========================================
-        // REQUIRED
-        // =========================================
-
-        if (!mobile) {
-          alert("Please enter your mobile number.");
-
-          userMobileInput.focus();
-
-          return;
-        }
-
-        // =========================================
-        // ONLY 10 DIGITS
-        // =========================================
-
-        if (!/^[0-9]{10}$/.test(mobile)) {
-          alert("Please enter a valid 10-digit mobile number.");
-
-          userMobileInput.focus();
-
-          return;
-        }
-
-        // =========================================
-        // SAVE MOBILE NUMBER
-        // =========================================
-
-        userMobile = mobile;
-
-        localStorage.setItem("chatUserMobile", userMobile);
-
-        // =========================================
-        // CONNECT USER
-        // =========================================
-
-        connectUser();
-
-        // =========================================
-        // HIDE POPUP
-        // =========================================
-
-        nameOverlay.style.display = "none";
-
-        // Focus message input
-
-        msgInput.focus();
-      }
-
-      // =========================================
-      // AUTOMATIC LOGIN AFTER REFRESH
-      // =========================================
-
-      if (userId && userMobile) {
-        // Hide mobile popup
-
-        nameOverlay.style.display = "none";
-
-        // Automatically reconnect
-
-        connectUser();
-      }
-
-      // =========================================
-      // DISPLAY MESSAGE
-      // =========================================
-
-      function appendMessage(text, type, time) {
-        const msgDiv = document.createElement("div");
-
-        msgDiv.className = `msg ${type}`;
-
-        msgDiv.innerHTML = `
-
-                ${escapeHtml(text)}
-
-                <span class="time">
-
-                    ${escapeHtml(time)}
-
-                </span>
-
-            `;
-
-        chatBox.appendChild(msgDiv);
-
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }
-
-      // =========================================
-      // SEND USER MESSAGE
-      // =========================================
-
-      function sendMessage() {
-        const text = msgInput.value.trim();
-
-        if (!text) {
-          return;
-        }
-
-        // =========================================
-        // CHECK USER
-        // =========================================
-
-        if (!userId || !userMobile) {
-          alert("Please enter your mobile number first.");
-
-          nameOverlay.style.display = "flex";
-
-          userMobileInput.focus();
-
-          return;
-        }
-
-        // =========================================
-        // CURRENT TIME
-        // =========================================
-
-        const now = new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-
-          minute: "2-digit",
-        });
-
-        // =========================================
-        // SHOW MESSAGE
-        // =========================================
-
-        appendMessage(text, "sent", now);
-
-        // =========================================
-        // SEND TO SERVER
-        // =========================================
-
-        socket.emit("send_user_message", {
-          message: text,
-        });
-
-        // =========================================
-        // CLEAR INPUT
-        // =========================================
-
-        msgInput.value = "";
-      }
-
-      // =========================================
-      // ENTER KEY FOR MESSAGE
-      // =========================================
-
-      function handleKey(e) {
-        if (e.key === "Enter") {
-          sendMessage();
-        }
-      }
-
-      // =========================================
-      // RECEIVE ADMIN MESSAGE
-      // =========================================
-
-      socket.on("user_receive_message", (data) => {
-        appendMessage(data.message, "received", data.time);
-      });
-
-      // =========================================
-      // RECEIVE CHAT HISTORY
-      // =========================================
-
-      socket.on("chat_history", (data) => {
-        console.log("Chat history received:", data);
-
-        // =========================================
-        // UPDATE USER ID
-        // =========================================
-
-        if (data.userId) {
-          userId = data.userId;
-
-          localStorage.setItem("chatUserId", userId);
-        }
-
-        // =========================================
-        // UPDATE MOBILE
-        // =========================================
-
-        if (data.mobile) {
-          userMobile = data.mobile;
-
-          localStorage.setItem("chatUserMobile", userMobile);
-        }
-
-        // =========================================
-        // CLEAR CURRENT CHAT
-        // =========================================
-
-        chatBox.innerHTML = "";
-
-        // =========================================
-        // DISPLAY OLD MESSAGES
-        // =========================================
-
-        if (data.messages && data.messages.length > 0) {
-          data.messages.forEach((message) => {
-            const time = new Date(message.time).toLocaleTimeString([], {
-              hour: "2-digit",
-
-              minute: "2-digit",
-            });
-
-            appendMessage(
-              message.message,
-
-              message.sender === "user" ? "sent" : "received",
-
-              time,
-            );
-          });
-        }
-
-        // =========================================
-        // NO HISTORY
-        // =========================================
-        else {
-          appendMessage("Hello! How can we help you?", "received", "Just now");
-        }
-      });
-
-      // =========================================
-      // MOBILE ENTER KEY
-      // =========================================
-
-      userMobileInput.addEventListener("keypress", function (e) {
-        if (e.key === "Enter") {
-          startChat();
-        }
-      });
-
-      // =========================================
-      // ALLOW ONLY NUMBERS
-      // =========================================
-
-      userMobileInput.addEventListener("input", function () {
-        this.value = this.value.replace(/[^0-9]/g, "").slice(0, 10);
-      });
-
-      // =========================================
-      // ESCAPE HTML
-      // =========================================
-
-      function escapeHtml(value) {
-        const div = document.createElement("div");
-
-        div.textContent = value ?? "";
-
-        return div.innerHTML;
-      }
-    </script>
-  </body>
+    <div class="footer">
+      <input
+        type="text"
+        id="msgInput"
+        placeholder="Message..."
+        autocomplete="off"
+        onkeydown="handleKey(event)"
+      />
+
+      <button
+        type="button"
+        class="send-btn"
+        onclick="sendMessage()"
+      >
+        ➤
+      </button>
+    </div>
+
+  </div>
+  <script src="js/index_script.js"></script>
+</body>
 </html>

@@ -1,0 +1,468 @@
+:root {
+    --app-height: 100dvh;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: #efeae2;
+}
+
+body {
+    width: 100vw;
+    height: var(--app-height);
+    overflow: hidden;
+}
+
+button,
+input {
+    font: inherit;
+    -webkit-tap-highlight-color: transparent;
+}
+
+button {
+    touch-action: manipulation;
+}
+
+.chat-container {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: var(--app-height);
+    min-height: 0;
+    margin: 0;
+    padding: var(--safe-top) var(--safe-right) 0 var(--safe-left);
+    display: flex;
+    flex-direction: column;
+    background: #efeae2;
+    overflow: hidden;
+}
+
+.header {
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 60px;
+    background: #075e54;
+    color: white;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 50%;
+    background: #25d366;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.user-info {
+    min-width: 0;
+    overflow: hidden;
+    flex: 1;
+}
+
+.user-info h4 {
+    font-size: 16px;
+    line-height: 1.2;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    line-height: 1.2;
+    opacity: 0.95;
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    min-width: 7px;
+    border-radius: 50%;
+    background: #9aa0a6;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.status-dot.online {
+    background: #25d366;
+    box-shadow: 0 0 0 2px rgba(37, 211, 102, 0.18);
+}
+
+.status-dot.offline {
+    background: #9aa0a6;
+}
+
+.name-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: var(--app-height);
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.name-box {
+    width: min(100%, 380px);
+    max-height: calc(var(--app-height) - 32px);
+    overflow-y: auto;
+    background: white;
+    border-radius: 12px;
+    padding: clamp(18px, 5vw, 25px);
+    text-align: center;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+}
+
+.name-box h2 {
+    color: #075e54;
+    margin-bottom: 8px;
+    font-size: clamp(21px, 5vw, 26px);
+}
+
+.name-box p {
+    color: #667781;
+    font-size: 14px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.name-box input {
+    width: 100%;
+    min-height: 46px;
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+.name-box input:focus {
+    border-color: #00a884;
+}
+
+.start-btn {
+    width: 100%;
+    min-height: 46px;
+    padding: 12px;
+    background: #00a884;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+.start-btn:hover {
+    background: #008f72;
+}
+
+.start-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.chat-box {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    padding: 15px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background-color: #efeae2;
+    background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png");
+    background-repeat: repeat;
+}
+
+.msg {
+    width: fit-content;
+    max-width: min(75%, 700px);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.4;
+    position: relative;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.received {
+    background: white;
+    align-self: flex-start;
+    border-top-left-radius: 0;
+}
+
+.sent {
+    background: #d9fdd3;
+    align-self: flex-end;
+    border-top-right-radius: 0;
+}
+
+.time {
+    display: inline-block;
+    font-size: 10px;
+    color: #667781;
+    margin-left: 10px;
+    margin-top: 4px;
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
+.footer {
+    flex: 0 0 auto;
+    width: 100%;
+    display: flex;
+    padding: 8px 10px;
+    padding-bottom: max(8px, var(--safe-bottom));
+    background: #f0f2f5;
+    align-items: center;
+    gap: 8px;
+}
+
+.footer input {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 20px;
+    outline: none;
+    font-size: 16px;
+}
+
+.send-btn {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border: none;
+    border-radius: 50%;
+    background: #00a884;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.send-btn:hover {
+    background: #008f72;
+}
+
+@media (max-width: 360px) {
+    .header {
+        min-height: 56px;
+        padding: 8px 10px;
+    }
+
+    .avatar {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        font-size: 12px;
+    }
+
+    .user-info h4 {
+        font-size: 14px;
+    }
+
+    .chat-box {
+        padding: 10px;
+        gap: 6px;
+    }
+
+    .msg {
+        max-width: 88%;
+        padding: 7px 10px;
+        font-size: 13px;
+    }
+
+    .footer {
+        padding: 6px 7px;
+        padding-bottom: max(6px, var(--safe-bottom));
+    }
+
+    .footer input {
+        min-height: 40px;
+        padding: 9px 12px;
+    }
+
+    .send-btn {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        flex-basis: 38px;
+    }
+}
+
+@media (min-width: 600px) {
+    .header {
+        min-height: 64px;
+        padding: 12px 20px;
+    }
+
+    .avatar {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+    }
+
+    .chat-box {
+        padding: 20px;
+        gap: 10px;
+    }
+
+    .msg {
+        max-width: min(70%, 800px);
+        font-size: 15px;
+    }
+
+    .footer {
+        padding: 10px 16px;
+        padding-bottom: max(10px, var(--safe-bottom));
+    }
+
+    .footer input {
+        min-height: 44px;
+    }
+
+    .send-btn {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        flex-basis: 44px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .header {
+        min-height: 68px;
+        padding: 12px 24px;
+    }
+
+    .avatar {
+        width: 46px;
+        height: 46px;
+        min-width: 46px;
+    }
+
+    .user-info h4 {
+        font-size: 17px;
+    }
+
+    .chat-box {
+        padding: 20px 24px;
+    }
+
+    .msg {
+        max-width: min(65%, 900px);
+        font-size: 15px;
+    }
+
+    .footer {
+        padding: 10px 20px;
+    }
+
+    .footer input {
+        min-height: 46px;
+    }
+
+    .send-btn {
+        width: 46px;
+        height: 46px;
+        min-width: 46px;
+        flex-basis: 46px;
+    }
+}
+
+@media (max-height: 500px) {
+    .header {
+        min-height: 48px;
+        padding: 5px 10px;
+    }
+
+    .avatar {
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+    }
+
+    .chat-box {
+        padding: 8px 10px;
+        gap: 5px;
+    }
+
+    .footer {
+        padding: 4px 7px;
+        padding-bottom: max(4px, var(--safe-bottom));
+    }
+
+    .footer input {
+        min-height: 38px;
+        padding: 7px 12px;
+    }
+
+    .send-btn {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        flex-basis: 36px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
+        animation: none !important;
+    }
+}
